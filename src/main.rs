@@ -1,6 +1,6 @@
-use crate::command::options;
+use crate::cmd::options;
 
-mod command;
+mod cmd;
 mod subcommand;
 
 fn main() {
