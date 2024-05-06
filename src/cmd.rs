@@ -1,6 +1,9 @@
 use bpaf::Bpaf;
 
-use crate::subcommand::request::{request, Request};
+use crate::subcommand::{
+    auth::{fallback_kubeconfig, Auth},
+    request::{request, Request},
+};
 
 #[derive(Bpaf, Debug)]
 #[bpaf(options)]
@@ -10,10 +13,15 @@ pub struct Options {
     /// TODO: verbose description
     verbose: bool,
 
-    #[bpaf(switch, short, long)]
+    #[bpaf(
+        argument("KUBECONFIG"),
+        short,
+        long,
+        fallback_with(|| fallback_kubeconfig()),
+        display_fallback
+    )]
     /// TODO: kubeconfig description
-    /// placeholder for now
-    config: bool,
+    config: Auth,
 
     #[bpaf(external(request))]
     request: Request,
