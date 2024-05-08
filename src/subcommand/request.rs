@@ -40,7 +40,7 @@ pub enum Method {
 impl Method {
     pub async fn send(&self, auth: &Auth) -> Result<(), Box<dyn std::error::Error>> {
         let timeout: Duration = Duration::from_secs(2);
-        let (ca_cert, client_ident) = auth.get_tls()?;
+        let (ca_cert, client_ident) = auth.get_mtls()?;
         let verbose = false;
 
         let client = Client::builder()
@@ -50,13 +50,12 @@ impl Method {
             .identity(client_ident)
             .connection_verbose(verbose)
             .build()
-            .expect("Unablet to build client");
+            .expect("Unable to build client");
 
+        let mut url = auth.api_server.to_string();
         let request = match &self {
             Method::Get(req) => {
-                let (version, namespace, path) = req.send();
-                // let url = format!("{}/api/{version}/namespaces/{namespace}/{path}", auth.api_server);
-                let url = format!("{}/api/{version}/namespaces/{namespace}/pods", auth.api_server);
+                url.push_str(&req.send());
                 client.get(url)
             }
             Method::Post(_req) => todo!(),
@@ -64,7 +63,6 @@ impl Method {
             Method::Delete(_req) => todo!(),
             Method::Patch(_req) => todo!(),
         };
-
 
         let response = request.send().await.expect("Error sending request");
         let message = response.text().await.expect("Unable to parse message");

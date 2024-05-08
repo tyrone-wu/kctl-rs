@@ -22,9 +22,9 @@ pub enum ResourceType {
 }
 
 impl ResourceType {
-    pub fn process(&self) -> (&str, &str, &str) {
+    pub fn get_path(&self) -> String {
         match &self {
-            ResourceType::Pod(pod) => pod.process(),
+            ResourceType::Pod(pod) => pod.get_path(),
             ResourceType::Service(_) => todo!(),
             ResourceType::CustomResourceDefinition(_) => todo!(),
         }

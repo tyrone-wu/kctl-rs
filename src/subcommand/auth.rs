@@ -87,7 +87,7 @@ impl Auth {
             .expect("Unable to decode client key");
 
         Self {
-            path: path.to_owned(),
+            path: path.to_string(),
             api_server,
             ca_cert,
             client_cert,
@@ -95,7 +95,7 @@ impl Auth {
         }
     }
 
-    pub fn get_tls(&self) -> Result<(Certificate, Identity), Box<dyn std::error::Error>> {
+    pub fn get_mtls(&self) -> Result<(Certificate, Identity), Box<dyn std::error::Error>> {
         let ca_cert = Certificate::from_pem(&self.ca_cert).expect("Unable to parse ca cert");
 
         let mut client = self.client_cert.clone();

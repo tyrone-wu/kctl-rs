@@ -17,12 +17,12 @@ pub struct GetRequest {
 }
 
 impl GetRequest {
-    pub fn send(&self) -> (&str, &str, &str) {
+    pub fn send(&self) -> String {
         let GetRequest {
             opts: _opts,
             resource_type,
         } = &self;
-
-        resource_type.process()
+        let path = resource_type.get_path();
+        path
     }
 }
