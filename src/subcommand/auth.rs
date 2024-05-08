@@ -2,14 +2,16 @@ use std::{env, fmt::Display, fs, str::FromStr};
 
 use base64::{prelude::BASE64_STANDARD, Engine};
 use kube::config::Kubeconfig;
+use reqwest::{Certificate, Identity};
 use secrecy::ExposeSecret;
 
 #[derive(Debug)]
 pub struct Auth {
     path: String,
-    api_server: String,
-    cert: String,
-    key: String,
+    pub api_server: String,
+    ca_cert: Vec<u8>,
+    client_cert: Vec<u8>,
+    client_key: Vec<u8>,
 }
 
 impl Auth {
@@ -36,9 +38,9 @@ impl Auth {
                     .as_ref()
                     .expect("No context found")
             })
-            .unwrap();
+            .expect("No context found");
 
-        // Parse api server
+        // Parse cluster ca and api server
         let cluster = config
             .clusters
             .iter()
@@ -49,7 +51,15 @@ impl Auth {
             .expect("No cluster found");
         let api_server = cluster.server.to_owned().expect("Server not found");
 
-        // Parse cert and key
+        let ca_cert_secret = cluster
+            .certificate_authority_data
+            .as_ref()
+            .expect("No ca cert data found");
+        let ca_cert = BASE64_STANDARD
+            .decode(ca_cert_secret)
+            .expect("Unable to decode ca cert");
+
+        // Parse client cert and key
         let user = config
             .auth_infos
             .iter()
@@ -59,31 +69,40 @@ impl Auth {
             .as_ref()
             .expect("No user found");
 
-        let cert_secret = user
+        let client_cert_secret = user
             .client_certificate_data
             .as_ref()
-            .expect("No client cert data found");
-        let cert = String::from_utf8(
-            BASE64_STANDARD
-                .decode(cert_secret)
-                .expect("Unable to decode cert"),
-        )
-        .expect("Unable to decode cert");
+            .expect("No client client cert data found");
+        let client_cert = BASE64_STANDARD
+            .decode(client_cert_secret)
+            .expect("Unable to decode client cert");
 
-        let key_secret = user
+        let client_key_secret = user
             .client_key_data
             .as_ref()
             .expect("No client key data found")
             .expose_secret();
-        let key = String::from_utf8(BASE64_STANDARD.decode(key_secret).expect("Unable to decode key"))
-            .expect("Unable to decode key");
+        let client_key = BASE64_STANDARD
+            .decode(client_key_secret)
+            .expect("Unable to decode client key");
 
         Self {
             path: path.to_owned(),
             api_server,
-            cert,
-            key,
+            ca_cert,
+            client_cert,
+            client_key,
         }
+    }
+
+    pub fn get_tls(&self) -> Result<(Certificate, Identity), Box<dyn std::error::Error>> {
+        let ca_cert = Certificate::from_pem(&self.ca_cert).expect("Unable to parse ca cert");
+
+        let mut client = self.client_cert.clone();
+        client.extend_from_slice(&self.client_key);
+        let client_ident = Identity::from_pem(&client).expect("Unable to parse client cert and key");
+
+        Ok((ca_cert, client_ident))
     }
 }
 

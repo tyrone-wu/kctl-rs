@@ -15,5 +15,5 @@ pub struct PostRequest {
         custom_usage("RESOURCE"),
         group_help("Available resources:")
     )]
-    resource_type: ResourceType,
+    pub resource_type: ResourceType,
 }

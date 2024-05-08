@@ -2,16 +2,15 @@ use bpaf::Bpaf;
 
 use crate::subcommand::{
     auth::{fallback_kubeconfig, Auth},
-    request::{request, Request},
+    request::{method, Method},
 };
 
 #[derive(Bpaf, Debug)]
 #[bpaf(options)]
-#[allow(dead_code)]
 pub struct Options {
     #[bpaf(switch, short, long)]
     /// TODO: verbose description
-    verbose: bool,
+    pub verbose: bool,
 
     #[bpaf(
         argument("KUBECONFIG"),
@@ -21,8 +20,8 @@ pub struct Options {
         display_fallback
     )]
     /// TODO: kubeconfig description
-    config: Auth,
+    pub config: Auth,
 
-    #[bpaf(external(request))]
-    request: Request,
+    #[bpaf(external(method), custom_usage("COMMANDS"), group_help("Available commands:"))]
+    pub request: Method,
 }

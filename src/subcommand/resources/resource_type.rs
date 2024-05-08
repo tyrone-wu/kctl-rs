@@ -16,8 +16,17 @@ pub enum ResourceType {
     /// TODO: service type description
     Service(#[bpaf(external(service))] Service),
 
-    // more k8s resources
     #[bpaf(command("customresourcedefinition"), long("crd"))]
     /// TODO: crd type description
     CustomResourceDefinition(#[bpaf(external(custom_resource_definition))] CustomResourceDefinition),
+}
+
+impl ResourceType {
+    pub fn process(&self) -> (&str, &str, &str) {
+        match &self {
+            ResourceType::Pod(pod) => pod.process(),
+            ResourceType::Service(_) => todo!(),
+            ResourceType::CustomResourceDefinition(_) => todo!(),
+        }
+    }
 }
