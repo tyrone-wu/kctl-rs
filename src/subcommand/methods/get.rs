@@ -1,4 +1,5 @@
 use bpaf::Bpaf;
+use reqwest::ClientBuilder;
 
 use crate::subcommand::resources::resource_type::{resource_type, ResourceType};
 
@@ -17,12 +18,17 @@ pub struct GetRequest {
 }
 
 impl GetRequest {
-    pub fn send(&self) -> String {
+    pub async fn send(
+        &self,
+        api_server: &str,
+        client: ClientBuilder,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let GetRequest {
             opts: _opts,
             resource_type,
         } = &self;
-        let path = resource_type.get_path();
-        path
+        let output = resource_type.get_request(api_server, client).await?;
+        println!("{}", output);
+        Ok(())
     }
 }

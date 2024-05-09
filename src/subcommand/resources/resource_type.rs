@@ -1,13 +1,20 @@
 use bpaf::Bpaf;
+use reqwest::ClientBuilder;
 
 use super::k8s::{
-    customresourcedefinition::{custom_resource_definition, CustomResourceDefinition},
-    pod::{pod, Pod},
-    service::{service, Service},
+    namespace::{namespace, Namespace},
+    namespaced::{
+        pod::{pod, Pod},
+        service::{service, Service},
+    },
 };
 
 #[derive(Bpaf, Debug)]
 pub enum ResourceType {
+    #[bpaf(command("namespace"), long("ns"))]
+    /// TODO: namespace type description
+    Namespace(#[bpaf(external(namespace))] Namespace),
+
     #[bpaf(command("pod"), long("po"))]
     /// TODO: pod type description
     Pod(#[bpaf(external(pod))] Pod),
@@ -15,18 +22,20 @@ pub enum ResourceType {
     #[bpaf(command("service"), long("svc"))]
     /// TODO: service type description
     Service(#[bpaf(external(service))] Service),
-
-    #[bpaf(command("customresourcedefinition"), long("crd"))]
-    /// TODO: crd type description
-    CustomResourceDefinition(#[bpaf(external(custom_resource_definition))] CustomResourceDefinition),
 }
 
 impl ResourceType {
-    pub fn get_path(&self) -> String {
-        match &self {
-            ResourceType::Pod(pod) => pod.get_path(),
+    pub async fn get_request(
+        &self,
+        api_server: &str,
+        client: ClientBuilder,
+    ) -> Result<String, Box<dyn std::error::Error>> {
+        let client = client.build()?;
+        let output = match &self {
+            ResourceType::Namespace(namespace) => namespace.get_request(api_server, client).await?,
+            ResourceType::Pod(pod) => pod.get_request(api_server, client).await?,
             ResourceType::Service(_) => todo!(),
-            ResourceType::CustomResourceDefinition(_) => todo!(),
-        }
+        };
+        Ok(output)
     }
 }

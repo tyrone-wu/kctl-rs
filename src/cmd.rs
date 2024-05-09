@@ -22,6 +22,10 @@ pub struct Options {
     /// TODO: kubeconfig description
     pub config: Auth,
 
-    #[bpaf(external(method), custom_usage("COMMANDS"), group_help("Available commands:"))]
+    #[bpaf(
+        external(method),
+        custom_usage("COMMAND ... RESOURCE"),
+        group_help("Available commands:")
+    )]
     pub request: Method,
 }

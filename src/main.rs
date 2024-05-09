@@ -10,6 +10,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         config,
         request,
     } = options().run();
-    let _ = request.send(&config).await;
+    request.send(&config).await?;
     Ok(())
 }

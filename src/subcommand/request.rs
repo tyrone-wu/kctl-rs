@@ -48,25 +48,15 @@ impl Method {
             .use_rustls_tls()
             .add_root_certificate(ca_cert)
             .identity(client_ident)
-            .connection_verbose(verbose)
-            .build()
-            .expect("Unable to build client");
+            .connection_verbose(verbose);
 
-        let mut url = auth.api_server.to_string();
-        let request = match &self {
-            Method::Get(req) => {
-                url.push_str(&req.send());
-                client.get(url)
-            }
+        match &self {
+            Method::Get(req) => req.send(&auth.api_server, client).await?,
             Method::Post(_req) => todo!(),
             Method::Put(_req) => todo!(),
             Method::Delete(_req) => todo!(),
             Method::Patch(_req) => todo!(),
-        };
-
-        let response = request.send().await.expect("Error sending request");
-        let message = response.text().await.expect("Unable to parse message");
-        println!("{:?}", message);
+        }
 
         Ok(())
     }
