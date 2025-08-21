@@ -2,6 +2,8 @@ use bpaf::Bpaf;
 use k8s_openapi::{api::core::v1::Namespace as K8sNamespace, List};
 use reqwest::Client;
 
+use crate::subcommand::api::api_group::{Api, ApiGroup};
+
 #[derive(Bpaf, Debug)]
 pub struct Namespace {
     #[bpaf(short, long)]
@@ -15,8 +17,8 @@ impl Namespace {
     }
 
     pub fn get_path(&self) -> String {
-        let version = "v1";
-        let mut path = format!("api/{version}/namespaces");
+        let api = Api::new(ApiGroup::Core);
+        let mut path = format!("{}/v1/namespaces", api.get_path());
         if let Some(name) = &self.name {
             path.push_str(&format!("/{name}"));
         }
@@ -31,7 +33,7 @@ impl Namespace {
         let path = &self.get_path();
         let url = format!("{api_server}/{path}");
         let response = client.get(url).send().await?;
-        if self.name.is_some() {
+        if self.name.is_none() {
             let body = response.json::<List<K8sNamespace>>().await?;
             println!("{:#?}", body);
         } else {

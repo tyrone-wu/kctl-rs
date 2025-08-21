@@ -4,10 +4,14 @@ use base64::{prelude::BASE64_STANDARD, Engine};
 use kube::config::Kubeconfig;
 use reqwest::{Certificate, Identity};
 use secrecy::ExposeSecret;
+use tracing::info;
 
 #[derive(Debug)]
 pub struct Auth {
     path: String,
+    context: String,
+    cluster: String,
+    client: String,
     pub api_server: String,
     ca_cert: Vec<u8>,
     client_cert: Vec<u8>,
@@ -24,8 +28,9 @@ impl Auth {
         // Get current context if exists, otherwise get first context in the list
         let context = config
             .current_context
+            .as_ref()
             .map(|current_context| {
-                let named_context = config.contexts.iter().find(|ctx| ctx.name == current_context);
+                let named_context = config.contexts.iter().find(|ctx| &ctx.name == current_context);
                 let context_opt = if named_context.is_some() {
                     named_context
                 } else {
@@ -88,6 +93,9 @@ impl Auth {
 
         Self {
             path: path.to_string(),
+            context: config.current_context.unwrap().to_string(),
+            cluster: context.cluster.to_string(),
+            client: context.user.to_string(),
             api_server,
             ca_cert,
             client_cert,
@@ -95,9 +103,15 @@ impl Auth {
         }
     }
 
-    pub fn get_mtls(&self) -> Result<(Certificate, Identity), Box<dyn std::error::Error>> {
-        let ca_cert = Certificate::from_pem(&self.ca_cert).expect("Unable to parse ca cert");
+    pub fn get_mtls(&self, verbose: bool) -> Result<(Certificate, Identity), Box<dyn std::error::Error>> {
+        if verbose {
+            info!("Kubeconfig file: {}", &self.path);
+            info!("== Context: {}", &self.context);
+            info!("==== Cluster: {}", &self.cluster);
+            info!("==== Client: {}", &self.client);
+        }
 
+        let ca_cert = Certificate::from_pem(&self.ca_cert).expect("Unable to parse ca cert");
         let mut client = self.client_cert.clone();
         client.extend_from_slice(&self.client_key);
         let client_ident = Identity::from_pem(&client).expect("Unable to parse client cert and key");

@@ -2,7 +2,7 @@ use bpaf::Bpaf;
 
 use crate::subcommand::{
     auth::{fallback_kubeconfig, Auth},
-    request::{method, Method},
+    request_cmd::{method, Method},
 };
 
 #[derive(Bpaf, Debug)]

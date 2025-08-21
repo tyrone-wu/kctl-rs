@@ -2,7 +2,7 @@ use bpaf::Bpaf;
 use k8s_openapi::{api::core::v1::Pod as K8sPod, List};
 use reqwest::Client;
 
-use crate::subcommand::resources::k8s::namespace::Namespace;
+use crate::subcommand::api::resources::namespace::Namespace;
 
 #[derive(Bpaf, Debug)]
 pub struct Pod {
@@ -33,7 +33,7 @@ impl Pod {
         let path = &self.get_path();
         let url = format!("{api_server}/{path}");
         let response = client.get(url).send().await?;
-        if self.name.is_some() {
+        if self.name.is_none() {
             let body = response.json::<List<K8sPod>>().await?;
             println!("{:#?}", body);
         } else {

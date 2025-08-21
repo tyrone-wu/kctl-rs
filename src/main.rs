@@ -6,10 +6,13 @@ mod subcommand;
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let Options {
-        verbose: _verbose,
+        verbose,
         config,
         request,
     } = options().run();
-    request.send(&config).await?;
+    if verbose {
+        tracing_subscriber::fmt::init();
+    }
+    request.send(verbose, &config).await?;
     Ok(())
 }

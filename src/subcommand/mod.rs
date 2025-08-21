@@ -1,5 +1,5 @@
 pub mod auth;
-pub mod request;
-pub mod resources;
+pub mod request_cmd;
 
-mod methods;
+mod api;
+mod resource_cmd;
